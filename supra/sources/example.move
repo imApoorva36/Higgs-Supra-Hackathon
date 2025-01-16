@@ -1,103 +1,126 @@
-module exampleAddress::transfer {
+module suprasmartbox::smartbox {
+    use supra::object;
+    use supra::tx_context::TxContext;
+    use supra::table::{Self, Table};
+    use supra::transfer;
+    use supra::event;
 
-    use supra_framework::supra_coin;
-    use supra_framework::coin;
-    use std::signer;
-    use std::account;
- 
-    // Function to transfer the specified amount to two destinations from the source signer
-    public entry fun two_by_two(
-        first: &signer,
-        amount_first: u64,
-        dst_first: address,
-        dst_second: address,
-    ) {
-        // Transfer the specified amount to the first destination
-        coin::transfer<supra_coin::SupraCoin>(first, dst_first,amount_first);
-        // Transfer the same amount to the second destination
-        coin::transfer<supra_coin::SupraCoin>(first,dst_second, amount_first);
+    // Custom event structs
+    public struct PackageCreatedEvent has copy, drop {
+        package_id: object::ID,
+        customer: address,
+        metadata: vector<u8>
     }
 
-     // Function to view the balance of an address
-    #[view]
-    public fun view_balance(address: address): u64 {
-        coin::balance<supra_coin::SupraCoin>(address)
+    public struct FundsReleasedEvent has copy, drop {
+        package_id: object::ID,
+        amount: u64,
+        recipient: address
     }
 
-    #[test_only]
-    use std::debug::print;
-    use std::string::utf8;
+    public struct State has key {
+        id: object::UID,
+        active_packages: Table<object::ID, bool>
+    }
 
-    // Test function for end-to-end balance check after transfers
-    #[test(supra_framework = @0x1, source = @0x123, destination1 = @0x111, destination2 = @0x222)]
+    public struct Package has key, store {
+        id: object::UID,
+        metadata: vector<u8>,
+        cid: vector<u8>,
+        customer: address,
+        delivered: bool,
+        funds: u64,
+        funds_released: bool,
+        name: vector<u8>,
+        description: vector<u8>
+    }
 
-    public entry fun test_end_to_end(
-        supra_framework: signer,
-        source: signer,
-        destination1: signer,
-        destination2: signer
+    fun init(ctx: &mut TxContext) {
+        transfer::share_object(
+            State {
+                id: object::new(ctx),
+                active_packages: table::new(ctx)
+            }
+        );
+    }
+
+    public fun create_package(
+        state: &mut State,
+        metadata: vector<u8>,
+        cid: vector<u8>,
+        customer: address,
+        name: vector<u8>,
+        description: vector<u8>,
+        funds: u64,
+        ctx: &mut TxContext
     ) {
-        // Setting up accounts for source and destinations
-       let source_addr = signer::address_of(&source);
-       account::create_account_for_test(source_addr); 
-
-        let destination1_addr = signer::address_of(&destination1);
-       account::create_account_for_test(destination1_addr); 
-
-        let destination2_addr = signer::address_of(&destination2);
-       account::create_account_for_test(destination2_addr); 
-
-         // Initializing Supra Coin for test
-        let (burn_cap, mint_cap) = supra_coin::initialize_for_test(&supra_framework);
+        let package = Package {
+            id: object::new(ctx),
+            metadata,
+            cid,
+            customer,
+            delivered: false,
+            funds,
+            funds_released: false,
+            name,
+            description
+        };
         
-        //Register SupraCoin coin store resource for each account
-        coin::register<supra_coin::SupraCoin>(&source);
-        coin::register<supra_coin::SupraCoin>(&destination1);
-        coin::register<supra_coin::SupraCoin>(&destination2);
+        let package_id = object::id(&package);
+        table::add(&mut state.active_packages, package_id, true);
         
-        // Mint some coins and deposit to source address
-        let coins_minted = coin::mint<supra_coin::SupraCoin>(100, &mint_cap);
-        coin::deposit(source_addr, coins_minted);
+        event::emit(PackageCreatedEvent {
+            package_id,
+            customer,
+            metadata
+        });
+        
+        transfer::transfer(package, customer);
+    }
 
-        //Dispose of burn and mint capability objects
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
+    public entry fun mark_as_delivered(
+        package: &mut Package,
+        state: &mut State
+    ) {
+        assert!(!package.delivered, 0);
+        package.delivered = true;
+        table::remove(&mut state.active_packages, object::id(package));
+    }
 
-        //Store starting balance
-        let source_balance_before : u64 = view_balance(source_addr);
-        let destination1_balance_before : u64 = view_balance(destination1_addr);
-        let destination2_balance_before : u64 = view_balance(destination2_addr);
+    public entry fun release_funds(
+        package: &mut Package,
+        state: &mut State
+    ) {
+        assert!(package.delivered, 0); // Package must be delivered
+        assert!(!package.funds_released, 1); // Funds not already released
+        
+        package.funds_released = true;
+        
+        event::emit(FundsReleasedEvent {
+            package_id: object::id(package),
+            amount: package.funds,
+            recipient: package.customer
+        });
+        
+        table::remove(&mut state.active_packages, object::id(package));
+    }
 
-        // Display initial balances
-        print(&utf8(b"Source wallet balance before transfer:"));
-        print(&source_balance_before);
+    #[allow(unused_assignment)]
+    public fun get_package_details(package: &Package): (address, vector<u8>, vector<u8>, bool, u64, vector<u8>, vector<u8>) {
+        (
+            package.customer,
+            package.metadata,
+            package.cid,
+            package.delivered,
+            package.funds,
+            package.name,
+            package.description
+        )
+    }
 
-        print(&utf8(b"Destination1 wallet balance before transfer:"));
-        print(&destination1_balance_before);
-
-        print(&utf8(b"Destination2 wallet balance before transfer:"));
-        print(&destination2_balance_before);
-
-        //Call the two_by_two function of this module to transfer 50 supra to each destination
-        two_by_two(&source, 50, destination1_addr, destination2_addr);
-
-        // Checking and displaying updated balances after transfer
-        let source_balance_after : u64 = view_balance(source_addr);
-        let destination1_balance_after : u64 = view_balance(destination1_addr);
-        let destination2_balance_after : u64 = view_balance(destination2_addr);
-
-        print(&utf8(b"Source wallet balance updated after transfer:"));
-        print(&source_balance_after);
-
-        print(&utf8(b"Destination1 wallet balance updated after transfer:"));
-        print(&destination1_balance_after);
-
-        print(&utf8(b"Destination2 wallet balance updated after transfer:"));
-        print(&destination2_balance_after);
-
-         // Verify final balances
-        assert!(coin::balance<supra_coin::SupraCoin>(source_addr) == 0 , 0);
-        assert!(coin::balance<supra_coin::SupraCoin>(destination1_addr) == 50 , 1);
-        assert!(coin::balance<supra_coin::SupraCoin>(destination2_addr) == 50 , 2);
+    entry fun destroy_state(state: State) {
+        let State { id, active_packages } = state;
+        object::delete(id);
+        table::destroy_empty(active_packages);
     }
 }
