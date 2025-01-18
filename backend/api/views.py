@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from .serializers import TagSerializer
 from rest_framework.decorators import (api_view)
 from .models import Tag
-from .utils import createRandomKey, readTag, writeTag, servo, verify_package
+from .utils import createRandomKey, readTag, writeTag, servo, verify_image_matches_description
 from rest_framework import status
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -43,3 +43,10 @@ def get_tag(request):
 def actuate_servo(request):
     servo(10)
     return Response({"message": "success"}, status=status.HTTP_200_OK)
+
+def verify_package_content(request):
+    product_description = request.data.get('product_description')
+    image_url = request.data.get('image_url')
+    response_json = verify_image_matches_description(image_url, product_description)
+
+    return Response(json.loads(response_json))
