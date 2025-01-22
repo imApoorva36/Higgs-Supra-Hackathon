@@ -1,4 +1,4 @@
-module exampleAddress::smartbox {
+module exampleaddress::smartboxmod {
     use aptos_std::signer::address_of;
     use std::vector;
 
@@ -24,22 +24,7 @@ module exampleAddress::smartbox {
         role: u8
     }
 
-    struct Package has key, store, drop {
-        id: u64,
-        package_id: u64,
-        metadata: vector<u8>,
-        cid: vector<u8>,
-        customer: address,
-        delivered: bool,
-        funds: u64,
-        funds_released: bool,
-        name: vector<u8>,
-        description: vector<u8>,
-        delivery_agent: address
-    }
-
     struct Order has key, store {
-        id: u64,
         order_id: u64,
         metadata: vector<u8>,
         cid: vector<u8>,
@@ -47,16 +32,21 @@ module exampleAddress::smartbox {
         fulfilled: bool,
         funds: u64,
         name: vector<u8>,
-        description: vector<u8>
+        description: vector<u8>,
+        sender_address: address,
+        receiver_address: address,
+        latitude: u64, // Changed from f64 to u64
+        longitude: u64, // Changed from f64 to u64
+        customer_rfid: vector<u8>,
+        delivery_rfid: vector<u8>,
+        funds_released: bool // Added this field
     }
 
     struct State has key, store {
         id: u64,
         owner: address,
         users: vector<User>,
-        active_packages: vector<Package>,
         active_orders: vector<Order>,
-        next_package_id: u64,
         next_order_id: u64,
         user_addresses: vector<address>
     }
@@ -64,10 +54,6 @@ module exampleAddress::smartbox {
     // Helper functions to generate new IDs
     fun next_order_id(state: &State): u64 {
         state.next_order_id
-    }
-
-    fun next_package_id(state: &State): u64 {
-        state.next_package_id
     }
 
     // Events
@@ -81,19 +67,8 @@ module exampleAddress::smartbox {
         customer: address
     }
 
-    struct PackageCreatedEvent has copy, drop, store {
-        package_id: u64,
-        customer: address,
-        metadata: vector<u8>
-    }
-
-    struct PackageDeliveredEvent has copy, drop, store {
-        package_id: u64,
-        delivery_agent: address
-    }
-
     struct FundsReleasedEvent has copy, drop, store {
-        package_id: u64,
+        order_id: u64,
         amount: u64,
         recipient: address
     }
@@ -104,9 +79,7 @@ module exampleAddress::smartbox {
             id: 0,
             owner: sender,
             users: vector::empty(),
-            active_packages: vector::empty(),
             active_orders: vector::empty(),
-            next_package_id: 0,
             next_order_id: 0,
             user_addresses: vector::empty()
         };
@@ -140,14 +113,19 @@ module exampleAddress::smartbox {
         cid: vector<u8>,
         name: vector<u8>,
         description: vector<u8>,
-        funds: u64
+        funds: u64,
+        sender_address: address,
+        receiver_address: address,
+        latitude: u64, // Changed from f64 to u64
+        longitude: u64, // Changed from f64 to u64
+        customer_rfid: vector<u8>,
+        delivery_rfid: vector<u8>
     ) acquires State {
         let sender = address_of(account);
         let state = borrow_global_mut<State>(sender);
         let order_id = next_order_id(state);
         
         let order = Order {
-            id: 0,
             order_id,
             metadata,
             cid,
@@ -155,76 +133,52 @@ module exampleAddress::smartbox {
             fulfilled: false,
             funds,
             name,
-            description
+            description,
+            sender_address,
+            receiver_address,
+            latitude,
+            longitude,
+            customer_rfid,
+            delivery_rfid,
+            funds_released: false // Initialize the new field
         };
 
         vector::push_back(&mut state.active_orders, order);
         state.next_order_id = state.next_order_id + 1;
     }
 
-    public entry fun create_package_from_order(
+    public entry fun mark_as_delivered(
         account: &signer,
         order_id: u64
     ) acquires State {
         let sender = address_of(account);
         let state = borrow_global_mut<State>(sender);
-        let package_id = next_package_id(state);
-
-        // Find user's role
-        let user_idx = find_user_index(&state.user_addresses, sender);
-        let user = vector::borrow(&state.users, user_idx);
-        assert!(user.role == ROLE_DELIVERY_AGENT, ERR_NOT_DELIVERY_AGENT);
 
         // Find order
         let order_idx = find_order_index(&state.active_orders, order_id);
         let order = vector::borrow_mut(&mut state.active_orders, order_idx);
+
+        assert!(order.delivery_rfid == vector::borrow(&state.users, find_user_index(&state.user_addresses, sender)).rfid_data, ERR_NOT_AUTHORIZED);
         assert!(!order.fulfilled, ERR_ORDER_FULFILLED);
 
-        let package = Package {
-            id: 0,
-            package_id,
-            metadata: order.metadata,
-            cid: order.cid,
-            customer: order.customer,
-            delivered: false,
-            funds: order.funds,
-            funds_released: false,
-            name: order.name,
-            description: order.description,
-            delivery_agent: sender
-        };
-
         order.fulfilled = true;
-        vector::push_back(&mut state.active_packages, package);
-        state.next_package_id = state.next_package_id + 1;
-    }
-
-    public entry fun mark_as_delivered(
-        account: &signer,
-        package_id: u64
-    ) acquires State, Package {
-        let sender = address_of(account);
-        let state = borrow_global_mut<State>(sender);
-        let package = borrow_global_mut<Package>(sender);
-
-        assert!(package.delivery_agent == sender, ERR_NOT_AUTHORIZED);
-        assert!(!package.delivered, ERR_PACKAGE_NOT_DELIVERED);
-
-        package.delivered = true;
-        vector::remove(&mut state.active_packages, package_id);
     }
 
     public entry fun release_funds(
         account: &signer,
-        _package_id: u64  // Prefix with underscore since unused
-    ) acquires State, Package {
+        order_id: u64
+    ) acquires State {
         let sender = address_of(account);
-        let _state = borrow_global_mut<State>(sender);
-        let package = borrow_global_mut<Package>(sender);
-        assert!(package.delivered, ERR_PACKAGE_NOT_DELIVERED);
-        assert!(!package.funds_released, ERR_FUNDS_ALREADY_RELEASED);
+        let state = borrow_global_mut<State>(sender);
 
-        package.funds_released = true;
+        // Find order
+        let order_idx = find_order_index(&state.active_orders, order_id);
+        let order = vector::borrow_mut(&mut state.active_orders, order_idx);
+
+        assert!(order.fulfilled, ERR_ORDER_FULFILLED);
+        assert!(!order.funds_released, ERR_FUNDS_ALREADY_RELEASED);
+
+        order.funds_released = true;
     }
 
     // Helper function to find user index
@@ -253,19 +207,6 @@ module exampleAddress::smartbox {
         abort ERR_NOT_AUTHORIZED
     }
 
-    // Helper function to find package by id
-    fun find_package_index(packages: &vector<Package>, target_id: u64): u64 {
-        let i = 0;
-        let len = vector::length(packages);
-        while (i < len) {
-            if (vector::borrow(packages, i).package_id == target_id) {
-                return i
-            };
-            i = i + 1;
-        };
-        abort ERR_NOT_AUTHORIZED
-    }
-
     // Helper function to find user by address
     fun find_user_by_address(state: &State, target_addr: address): u64 {
         let i = 0;
@@ -281,22 +222,27 @@ module exampleAddress::smartbox {
 
     // View functions
     #[view]
-    public fun get_package_details(package_id: u64): (
-        address, vector<u8>, vector<u8>, bool, u64, bool, vector<u8>, vector<u8>, address
+    public fun get_order_details(order_id: u64): (
+        address, vector<u8>, vector<u8>, bool, u64, bool, vector<u8>, vector<u8>, address, address, u64, u64, vector<u8>, vector<u8>
     ) acquires State {
         let state = borrow_global<State>(@0xa8ec96f327c18b20a4a20ac0f25725527e4686385710aa8a74df7cd75fc3e1e6);
-        let package_idx = find_package_index(&state.active_packages, package_id);
-        let package = vector::borrow(&state.active_packages, package_idx);
+        let order_idx = find_order_index(&state.active_orders, order_id);
+        let order = vector::borrow(&state.active_orders, order_idx);
         (
-            package.customer,
-            package.metadata,
-            package.cid,
-            package.delivered,
-            package.funds,
-            package.funds_released,
-            package.name,
-            package.description,
-            package.delivery_agent
+            order.customer,
+            order.metadata,
+            order.cid,
+            order.fulfilled,
+            order.funds,
+            order.funds_released,
+            order.name,
+            order.description,
+            order.sender_address,
+            order.receiver_address,
+            order.latitude, // Changed from f64 to u64
+            order.longitude, // Changed from f64 to u64
+            order.customer_rfid,
+            order.delivery_rfid
         )
     }
 

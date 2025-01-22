@@ -1,10 +1,10 @@
 [package]
-name = "move_contracts"
+name = "smartbox_package"
 version = "1.0.0"
 authors = []
 
 [addresses]
-exampleAddress = "0xa8ec96f327c18b20a4a20ac0f25725527e4686385710aa8a74df7cd75fc3e1e6"
+exampleaddress = "0xa8ec96f327c18b20a4a20ac0f25725527e4686385710aa8a74df7cd75fc3e1e6"
 
 [dev-addresses]
 
