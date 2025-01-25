@@ -1,15 +1,14 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { Package, Truck, CheckCircle, AlertCircle, Plus } from 'lucide-react'
-
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useState, useEffect } from "react"
+import { Package, Truck, CheckCircle, AlertCircle, Plus, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Dialog,
   DialogContent,
@@ -19,66 +18,45 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useSession } from 'next-auth/react'
-import axios from 'axios'
-import { OktoContextType, useOkto } from 'okto-sdk-react'
-import { useAppContext } from '@/components/AppContext'
-import { ethers } from 'ethers'
+import { DashboardStats } from "../../components/DashboardStats"
+import axios from "axios"
+import Image from "next/image"
 
-// Mock data to simulate fetching from the blockchain
+export interface PackageInterface {
+  id: number
+  cid: string
+  metadata: string
+  delivered: boolean
+  fundsReleased: boolean
+  funds: number
+}
+
+
 const mockPackages = [
-  { id: 1, cid: 'Qm...1', metadata: 'Books', delivered: false, fundsReleased: false, funds: 0.01 },
-  { id: 2, cid: 'Qm...2', metadata: 'Electronics', delivered: true, fundsReleased: false, funds: 0.05 },
-  { id: 3, cid: 'Qm...3', metadata: 'Clothing', delivered: true, fundsReleased: true, funds: 0.02 },
+  { id: 1, cid: "Qm...1", metadata: "Books", delivered: false, fundsReleased: false, funds: 0.01 },
+  { id: 2, cid: "Qm...2", metadata: "Electronics", delivered: true, fundsReleased: false, funds: 0.05 },
+  { id: 3, cid: "Qm...3", metadata: "Clothing", delivered: true, fundsReleased: true, funds: 0.02 },
 ]
 
 export default function CustomerDashboard() {
-  interface Package {
-    id: number;
-    cid: string;
-    metadata: string;
-    delivered: boolean;
-    fundsReleased: boolean;
-    funds: number
-  }
-
-  const [packages, setPackages] = useState<Package[]>([])
+  const [packages, setPackages] = useState<PackageInterface[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const { data: session } = useSession();
-  const { apiKey, setApiKey, buildType, setBuildType, account, setAccount, role, setRole, contract, setContract } = useAppContext();
-  const {
-    isLoggedIn,
-  } = useOkto() as OktoContextType;
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
     const fetchPackages = async () => {
       try {
-        setIsLoading(true);
-
-        if (contract) {
-          const packageData = await contract.getMyPackageDetails();
-          const formattedPackages = packageData.map((pkg, index) => ({
-            id: index + 1,
-            metadata: pkg.metadata,
-            cid: pkg.cid,
-            funds: ethers.utils.formatEther(pkg.funds),
-            delivered: pkg.delivered,
-            fundsReleased: pkg.fundsReleased,
-          }));
-          setPackages([...formattedPackages, ...mockPackages]); // Append mock packages
-        } else {
-          setPackages(mockPackages); // Fallback if no contract data
-        }
+        setIsLoading(true)
+        setTimeout(() => setPackages(mockPackages), 1000)
       } catch (error) {
-        console.error('Error fetching packages:', error);
-        setPackages(mockPackages); // Fallback in case of error
+        console.error("Error fetching packages:", error)
+        setPackages(mockPackages)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
-
-    fetchPackages();
-  }, [contract]);
+    }
+    fetchPackages()
+  }, [])
 
   const getStatusIcon = (delivered: boolean, fundsReleased: boolean) => {
     if (fundsReleased) return <CheckCircle className="h-5 w-5 text-green-500" />
@@ -87,132 +65,79 @@ export default function CustomerDashboard() {
   }
 
   const getStatusText = (delivered: boolean, fundsReleased: boolean) => {
-    if (fundsReleased) return 'Completed'
-    if (delivered) return 'Delivered'
-    return 'In Transit'
+    if (fundsReleased) return "Completed"
+    if (delivered) return "Delivered"
+    return "In Transit"
   }
 
-  const handleOpenBox = async (packageId: number) => {
-    console.log(`Releasing funds for package ${packageId}`);
-    setPackages(packages.map(pkg =>
-      pkg.id === packageId ? { ...pkg, fundsReleased: true } : pkg
-    ));
-    await actuateServo();
-  };
-
-  const readRFID = async (packageId: number) => {
-    try {
-
-      const response = await axios.get(`http://192.168.167.131:8000/api/get_tag/`);
-      const { tag_id: rfidFromAPI } = response.data;
-
-      console.log(`Fetched RFID: ${rfidFromAPI}`);
-
-      // const userData = await contract.getUserDetails(); // Update the Contract and add this function
-      // const { rfidData } = userData;
-
-      // console.log(`RFID from Contract: ${rfidData}`);
-
-      // if (rfidFromAPI === rfidData) {
-      //   alert('RFID matched! Opening SmartBox...');
-      handleOpenBox(packageId);
-      // } else {
-      //   alert('RFID mismatch! Access denied.');
-      // }
-    } catch (error) {
-      console.error('Error reading RFID or fetching user data:', error);
-      alert('Error verifying RFID.');
-    }
-  };
-
-
-  const verifyPackage = async () => {
-    try {
-      const response = await axios.post(
-        'http://192.168.167.131:8000/api/verify_package/',
-        {
-          product_description: "A brown rugby ball.",
-          image_url: "https://aqua-legislative-cod-798.mypinata.cloud/ipfs/QmaWvn63nPwCjndRz1vnmFrymvmqJcpRZsBmw9DegVmeSs"
-        }
-      );
-      console.log(response.data);
-      // {isValidPackage: true, reason: 'Although the package description does not directly…e packaging appears to be related to the product.'}
-    } catch (error) {
-      console.log(error);
-      alert('Error generating key');
-    }
-  };
+  const handleOpenBox = (packageId: number) => {
+    setPackages((prevPackages) =>
+      prevPackages.map((pkg) => (pkg.id === packageId ? { ...pkg, fundsReleased: true } : pkg)),
+    )
+    actuateServo()
+  }
 
   const actuateServo = async () => {
     try {
-      const response = await axios.get(`http://192.168.167.131:8000/api/servo/`);
-      console.log(response.data);
-      // {message: success} - 200
+      const response = await axios.get(`http://192.168.167.131:8000/api/servo/`)
+      console.log(response.data)
     } catch (error) {
-      console.log(error);
-      alert('Error generating key');
+      console.error("Error activating servo:", error)
     }
-  };
+  }
 
-  const handleCreateOrder = async (orderData) => {
+  const readRFID = async (packageId: number) => {
     try {
-      console.log('Creating new order:', orderData);
-
-      const { contents, cid, name, description, value } = orderData;
-
-      // Send the transaction with value (funds in wei)
-      const tx = await contract.createOrder(
-        contents,
-        cid,
-        value, // Ensure correct unit conversion
-        name,
-        description
-      );
-
-      console.log('Transaction sent:', tx);
-
-      // Wait for the transaction to be confirmed
-      const receipt = await tx.wait();
-      console.log('Transaction confirmed:', receipt);
-
-      const newPackageId = receipt.events[0]?.args?.orderId?.toString() || packages.length + 1;
-
-      const newPackage = {
-        id: newPackageId,
-        cid,
-        metadata,
-        delivered: false,
-        fundsReleased: false,
-        funds: parseFloat(funds),
-      };
-
-      setPackages([...packages, newPackage]);
+      const response = await axios.get(`http://192.168.167.131:8000/api/get_tag/`)
+      const { tag_id: rfidFromAPI } = response.data
+      console.log(`Fetched RFID: ${rfidFromAPI}`)
+      handleOpenBox(packageId)
     } catch (error) {
-      console.error('Error creating order:', error);
-      alert('Failed to create order. Please try again.');
+      console.error("Error reading RFID:", error)
     }
-  };
+  }
 
-
-
+  const filteredPackages = packages.filter(
+    (pkg) =>
+      pkg.metadata.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.cid.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* { account && role === 1 ? ( */}
-      <div>
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">My Packages</h1>
-          <div className='flex items-center space-x-4'>
-            <div className={`w-3 h-3 rounded-full ${isLoggedIn ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className="text-sm font-medium">
-              Status: {isLoggedIn ? 'Logged In' : 'Not Logged In'}
-            </span>
+    <>
+      <nav className="bg-primary p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <Image src="/box3-diag.png" alt="Box3 Logo" width={32} height={32} />
+            <div className="text-white text-lg font-bold">Customer Dashboard</div>
           </div>
-          <CreateOrderDialog onCreateOrder={handleCreateOrder} />
-
+          <div className="text-white">
+            <span className="font-bold">Wallet:</span> 0x1234...abcd
+          </div>
         </div>
+      </nav>
+      <div className="container mx-auto px-4 py-8 space-y-8">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <h1 className="text-3xl font-bold">My Packages</h1>
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search packages..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <CreateOrderDialog />
+          </div>
+        </div>
+
+        <DashboardStats packages={packages} />
+
         {isLoading ? (
-          <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3].map((i) => (
               <Card key={i}>
                 <CardHeader>
@@ -228,7 +153,7 @@ export default function CustomerDashboard() {
               </Card>
             ))}
           </div>
-        ) : packages.length === 0 ? (
+        ) : filteredPackages.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center h-40">
               <AlertCircle className="h-10 w-10 text-yellow-500 mb-4" />
@@ -237,13 +162,13 @@ export default function CustomerDashboard() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
-            {packages.map((pkg) => (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredPackages.map((pkg) => (
               <Card key={pkg.id}>
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <span>Package #{pkg.id}</span>
-                    <Badge variant={'secondary'}>
+                    <Badge variant="secondary" className="flex items-center">
                       {getStatusIcon(pkg.delivered, pkg.fundsReleased)}
                       <span className="ml-2">{getStatusText(pkg.delivered, pkg.fundsReleased)}</span>
                     </Badge>
@@ -251,78 +176,47 @@ export default function CustomerDashboard() {
                   <CardDescription>CID: {pkg.cid}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p><strong>Contents:</strong> {pkg.metadata}</p>
-                  <p><strong>Value:</strong>{pkg.funds} ETH</p>
+                  <p>
+                    <strong>Contents:</strong> {pkg.metadata}
+                  </p>
+                  <p>
+                    <strong>Value:</strong> {pkg.funds} ETH
+                  </p>
                 </CardContent>
                 <CardFooter>
-                  {pkg.delivered && !pkg.fundsReleased && (
-                    <Button onClick={() => readRFID(pkg.id)}>
-                      Open Box
-                    </Button>
-                  )}
+                  {pkg.delivered && !pkg.fundsReleased && <Button onClick={() => readRFID(pkg.id)}>Open Box</Button>}
                 </CardFooter>
               </Card>
             ))}
           </div>
-
         )}
       </div>
-      {/* ) : ( */}
-      <div className="flex flex-col items-center justify-center h-96">
-        <p className="text-lg font-semibold">You are not authorized to view this page</p>
-        <p className="text-sm text-muted-foreground">Please log in as a customer to access this page</p>
-      </div>
-      {/* )} */}
-    </div>
+    </>
   )
 }
 
-
-function CreateOrderDialog({ onCreateOrder }) {
+function CreateOrderDialog() {
   const [orderData, setOrderData] = useState({
-    contents: '',
+    contents: "",
     value: 0,
-    name: '',
-    description: '',
-    cid: ''
-  });
+    description: "",
+  })
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setOrderData(prevData => ({ ...prevData, [name]: value }));
-  };
+    const { name, value } = e.target
+    setOrderData((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // Validation
+    e.preventDefault()
     if (!orderData.contents || !orderData.value || !orderData.description) {
-      alert('Please fill in all required fields');
-      return;
+      alert("Please fill in all required fields")
+      return
     }
+    console.log("Order submitted:", orderData)
+    setOrderData({ contents: "", value: 0, description: "" })
+  }
 
-    try {
-
-
-      const completeOrderData = {
-        ...orderData,
-        cid: 'u'
-      };
-
-      await onCreateOrder(completeOrderData);
-
-      // Reset form after submission
-      setOrderData({
-        contents: '',
-        value: 0,
-        name: '',
-        description: '',
-        cid: ''
-      });
-    } catch (error) {
-      console.error('Order creation error:', error);
-    }
-  };
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -331,103 +225,54 @@ function CreateOrderDialog({ onCreateOrder }) {
           Create Order
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] bg-white">
+      <DialogContent className="bg-white sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Create New Order</DialogTitle>
-          <DialogDescription>
-            Create a new order for package delivery. Please provide the package contents and value (in ETH).
-          </DialogDescription>
+          <DialogDescription>Provide details for your package below.</DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit(e);
-          }}
-        >
-          <div className="grid gap-4 py-4">
-            {/* Package Contents Input */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="contents" className="text-right">
-                Contents
-              </Label>
-              <Textarea
-                id="contents"
-                name="contents"
-                value={orderData.contents}
-                onChange={(e) =>
-                  setOrderData({ ...orderData, contents: e.target.value })
-                }
-                className="col-span-3"
-                placeholder="Describe the package contents"
-                required
-              />
-            </div>
-
-            {/* Package Value Input */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="value" className="text-right">
-                Value (ETH)
-              </Label>
-              <Input
-                id="value"
-                name="value"
-                type="number"
-                value={orderData.value}
-                onChange={(e) =>
-                  setOrderData({ ...orderData, value: parseFloat(e.target.value) })
-                }
-                className="col-span-3"
-                placeholder="Enter package value"
-                step="0.0001"
-                min="0"
-                required
-              />
-            </div>
-
-            {/* Customer Name Input (Optional but illustrative) */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                value={orderData.name}
-                onChange={(e) =>
-                  setOrderData({ ...orderData, name: e.target.value })
-                }
-                className="col-span-3"
-                placeholder="Enter customer name"
-              />
-            </div>
-
-            {/* Description Input */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={orderData.description}
-                onChange={(e) =>
-                  setOrderData({ ...orderData, description: e.target.value })
-                }
-                className="col-span-3"
-                placeholder="Provide a brief description"
-                required
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="contents">Contents</Label>
+            <Textarea
+              id="contents"
+              name="contents"
+              value={orderData.contents}
+              onChange={handleInputChange}
+              placeholder="Describe the package contents"
+              required
+            />
           </div>
-
+          <div className="space-y-2">
+            <Label htmlFor="value">Value (ETH)</Label>
+            <Input
+              id="value"
+              name="value"
+              type="number"
+              value={orderData.value}
+              onChange={handleInputChange}
+              placeholder="Enter package value"
+              step="0.0001"
+              min="0"
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={orderData.description}
+              onChange={handleInputChange}
+              placeholder="Add any additional details"
+              required
+            />
+          </div>
           <DialogFooter>
-            <Button type="submit">Create Order</Button>
+            <Button type="submit">Submit Order</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-
   )
 }
-
 

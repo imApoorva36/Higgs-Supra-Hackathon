@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 // Dynamically import the modal to prevent SSR issues
 const WebcamCaptureModal = dynamic(
-    () => import("../../../components/WebcamCapture"),
+    () => import("../../components/WebcamCapture"),
     { ssr: false }
 );
 

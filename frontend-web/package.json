@@ -23,6 +23,7 @@
     "framer-motion": "^11.12.0",
     "input-otp": "^1.4.1",
     "lucide-react": "^0.473.0",
+    "mapbox-gl": "^3.9.3",
     "next": "15.1.5",
     "next-auth": "^4.24.10",
     "okto-sdk-react": "^0.1.3",

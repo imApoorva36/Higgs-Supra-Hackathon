@@ -33,7 +33,7 @@ import { useAppContext } from '@/components/AppContext'
 import Order from '../../models/order';
 
 const WebcamCaptureModal = dynamic(
-  () => import("../../../components/WebcamCapture"),
+  () => import("../../components/WebcamCapture"),
   { ssr: false }
 );
 // Mock data to simulate fetching from the blockchain
