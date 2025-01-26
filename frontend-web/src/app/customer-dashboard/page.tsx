@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Package, Truck, CheckCircle, AlertCircle, Plus, Search } from "lucide-react"
+import { Package, Truck, CheckCircle, AlertCircle, Plus, Search, Clock10 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +21,7 @@ import {
 import { DashboardStats } from "../../components/DashboardStats"
 import axios from "axios"
 import Image from "next/image"
+import { useAppContext } from "@/components/AppContext"
 
 export interface PackageInterface {
   id: number
@@ -36,12 +37,19 @@ const mockPackages = [
   { id: 1, cid: "Qm...1", metadata: "Books", delivered: false, fundsReleased: false, funds: 0.01 },
   { id: 2, cid: "Qm...2", metadata: "Electronics", delivered: true, fundsReleased: false, funds: 0.05 },
   { id: 3, cid: "Qm...3", metadata: "Clothing", delivered: true, fundsReleased: true, funds: 0.02 },
+  { id: 4, cid: "Qm...1", metadata: "Books", delivered: false, fundsReleased: false, funds: 0.01 },
+  { id: 5, cid: "Qm...2", metadata: "Electronics", delivered: true, fundsReleased: false, funds: 0.05 },
+  { id: 6, cid: "Qm...3", metadata: "Clothing", delivered: true, fundsReleased: true, funds: 0.02 },
+  { id: 7, cid: "Qm...1", metadata: "Books", delivered: false, fundsReleased: false, funds: 0.01 },
+  { id: 8, cid: "Qm...2", metadata: "Electronics", delivered: true, fundsReleased: false, funds: 0.05 },
+  { id: 9, cid: "Qm...3", metadata: "Clothing", delivered: true, fundsReleased: true, funds: 0.02 },
 ]
 
 export default function CustomerDashboard() {
   const [packages, setPackages] = useState<PackageInterface[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
+  const { account, setAccount } = useAppContext();
 
   useEffect(() => {
     const fetchPackages = async () => {
@@ -108,12 +116,19 @@ export default function CustomerDashboard() {
       <nav className="bg-primary p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <Image src="/box3-diag.png" alt="Box3 Logo" width={32} height={32} />
-            <div className="text-white text-lg font-bold">Customer Dashboard</div>
+            <Image src="/box3-diag.png" alt="Box3 Logo" width={40} height={40} />
+            <div className="text-white text-xl font-bold">Customer Dashboard</div>
           </div>
-          <div className="text-white">
-            <span className="font-bold">Wallet:</span> 0x1234...abcd
-          </div>
+          {account && (
+            <div className="p-2 border border-secondary rounded-full shadow-md">
+              <div className="flex items-center space-x-2 px-2">
+              <Image src="/starkey.png" alt="StarKey Logo" width={32} height={32} className="hidden sm:block" />
+              <span className="text-sm text-white font-semibold truncate max-w-[120px] sm:max-w-[200px]">
+                {`${account.slice(0, 6)}...${account.slice(-4)}`}
+              </span>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
       <div className="container mx-auto px-4 py-8 space-y-8">
@@ -164,27 +179,64 @@ export default function CustomerDashboard() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filteredPackages.map((pkg) => (
-              <Card key={pkg.id}>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Package #{pkg.id}</span>
-                    <Badge variant="secondary" className="flex items-center">
+              <Card key={pkg.id} className="hover:shadow-lg transition-shadow duration-200">
+                <CardHeader className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-xl font-bold text-primary">
+                      Package #{pkg.id}
+                    </CardTitle>
+                    <Badge variant="secondary"
+                      className="flex items-center px-3 py-1"
+                    >
                       {getStatusIcon(pkg.delivered, pkg.fundsReleased)}
-                      <span className="ml-2">{getStatusText(pkg.delivered, pkg.fundsReleased)}</span>
+                      <span className="ml-2 font-medium">{getStatusText(pkg.delivered, pkg.fundsReleased)}</span>
                     </Badge>
-                  </CardTitle>
-                  <CardDescription>CID: {pkg.cid}</CardDescription>
+                  </div>
+                  <CardDescription className="flex items-center space-x-2 text-sm">
+                    <Package className="h-4 w-4" />
+                    <span className="font-mono">CID: {pkg.cid}</span>
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <p>
-                    <strong>Contents:</strong> {pkg.metadata}
-                  </p>
-                  <p>
-                    <strong>Value:</strong> {pkg.funds} ETH
-                  </p>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Contents</p>
+                      <p className="font-medium">{pkg.metadata}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Value</p>
+                      <p className="font-medium">{pkg.funds} ETH</p>
+                    </div>
+                  </div>
                 </CardContent>
                 <CardFooter>
-                  {pkg.delivered && !pkg.fundsReleased && <Button onClick={() => readRFID(pkg.id)}>Open Box</Button>}
+                  {pkg.delivered && !pkg.fundsReleased ? (
+                    <Button
+                      onClick={() => readRFID(pkg.id)}
+                      className="w-full bg-primary hover:bg-primary/90"
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      Open Box
+                    </Button>
+                  ) : pkg.fundsReleased ? (
+                    <Button
+                      variant="ghost"
+                      className="w-full hover:bg-secondary/80"
+                      disabled
+                    >
+                      <CheckCircle className="mr-2 h-4 w-4" />
+                      Already Opened
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      className="w-full hover:bg-secondary/80"
+                      disabled
+                    >
+                      <Clock10 className="mr-2 h-4 w-4" />
+                      Arriving Soon
+                    </Button>
+                  )}
                 </CardFooter>
               </Card>
             ))}

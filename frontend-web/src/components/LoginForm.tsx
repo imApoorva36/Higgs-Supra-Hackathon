@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { ChevronLeft, ChevronRight, Truck, User } from "lucide-react"
 import Image from "next/image";
+import { useAppContext } from "./AppContext";
 
 interface StarkeyWindow extends Window {
     starkey?: {
@@ -27,8 +28,8 @@ export function LoginForm({
     const [rfid, setRfid] = useState('Fetching Your String...')
     const [provider, setProvider] = useState<any>()
     const router = useRouter()
-    const [role, setRole] = useState("")
-    const [account, setAccount] = useState("")
+    const {role, setRole} = useAppContext();
+    const {account, setAccount} = useAppContext();
 
 
     const connectStarKeyWallet = async () => {

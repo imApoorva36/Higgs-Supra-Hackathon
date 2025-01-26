@@ -1,23 +1,18 @@
 "use client";
 import React, { createContext, useState } from "react";
 import { useContext } from "react";
-import { OktoProvider, BuildType } from "okto-sdk-react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
-// Create a context with a default value
 export const AppContext = createContext();
 
-
 export const AppContextProvider = ({ children }) => {
-  const [apiKey, setApiKey] = useState(process.env.NEXT_PUBLIC_OKTO_CLIENT_API || "");
-  const [buildType, setBuildType] = useState(BuildType.SANDBOX);
   const [account, setAccount] = useState("");
   const [role, setRole] = useState(1);
   const [contract, setContract] = useState("");
   const { data: session } = useSession();
 
   async function handleGAuthCb() {
-    if(session) {
+    if (session) {
       return session.id_token;
     }
     await signIn("google");
@@ -25,10 +20,8 @@ export const AppContextProvider = ({ children }) => {
   }
 
   return (
-    <AppContext.Provider value={{ apiKey, setApiKey, buildType, setBuildType, account, setAccount, role, setRole, contract, setContract }}>
-      <OktoProvider apiKey={apiKey} buildType={buildType} gAuthCb={handleGAuthCb}>
+    <AppContext.Provider value={{ account, setAccount, role, setRole, contract, setContract }}>
         {children}
-      </OktoProvider>
     </AppContext.Provider>
   );
 };
