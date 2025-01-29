@@ -50,3 +50,7 @@ def verify_package_content(request):
     response_json = verify_image_matches_description(image_url, product_description)
 
     return Response(json.loads(response_json))
+
+@api_view(['GET'])
+def detect_object(request):
+    return Response({"status": True})
