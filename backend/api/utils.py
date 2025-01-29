@@ -45,9 +45,9 @@ def writeTag(code):
 
 def servo(duration):
     servo = AngularServo(18, min_pulse_width=0.0006, max_pulse_width=0.0023)
-    servo.angle = 90
-    sleep(duration)
     servo.angle = -90
+    sleep(duration)
+    servo.angle = 90
     sleep(1)
 
 # Configure the API key for Gemini
