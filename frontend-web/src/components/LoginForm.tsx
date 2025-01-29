@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { ChevronLeft, ChevronRight, Truck, User } from "lucide-react"
@@ -31,6 +31,13 @@ export function LoginForm({
     const {role, setRole} = useAppContext();
     const {account, setAccount} = useAppContext();
 
+    useEffect(() => {
+        const savedAccount = sessionStorage.getItem('starkeyAccount');
+        if (savedAccount) {
+            setAccount(savedAccount);
+        }
+    }, [setAccount]);
+
 
     const connectStarKeyWallet = async () => {
         if (!('starkey' in window)) {
@@ -44,6 +51,7 @@ export function LoginForm({
             try {
                 const accounts = await provider.connect();
                 setAccount(accounts[0])
+                sessionStorage.setItem('starkeyAccount', accounts[0]);
             } catch (error) {
                 window.alert(`Error connecting wallet: ${error}`)
             }
@@ -54,6 +62,7 @@ export function LoginForm({
         if (provider) {
             await provider.disconnect();
             setAccount("")
+            sessionStorage.removeItem('starkeyAccount');
         }
     }
 

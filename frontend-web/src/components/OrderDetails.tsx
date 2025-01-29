@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Badge } from './ui/badge';
-import {CheckCircle, Link, Map, Truck} from 'lucide-react';
+import {CheckCircle, Link, Map} from 'lucide-react';
 import Order from '@/models/order';
 import { Button } from './ui/button';
 
@@ -26,7 +26,7 @@ const OrderDetails = ({
   accessToken,
   startCoordinates,
   endCoordinates,
-  className = 'w-full h-[700px]',
+  className = 'w-full h-96',
   order
 } : OrderDetails) => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -116,17 +116,17 @@ const OrderDetails = ({
   }, [accessToken, startCoordinates, endCoordinates]);
 
   async function onCopyMapsLinkClick() {
-    const link:string = getGoogleMapsUrl(37.7749, -122.4194, 37.7749, -122.4194);
+    const link:string = getGoogleMapsUrl(startCoordinates[1], startCoordinates[0], endCoordinates[1], endCoordinates[0]);
     await navigator.clipboard.writeText(link);
     alert('Copied to clipboard!');
   }
 
   function onLaunchMapsClick() {
-    const link:string = getGoogleMapsUrl(37.7749, -122.4194, 37.7749, -122.4194);
+    const link:string = getGoogleMapsUrl(startCoordinates[1], startCoordinates[0], endCoordinates[1], endCoordinates[0]);
     window.open(link, '_blank');
   }
 
-  function handleMarkAsDelivered(id: number) {
+  function handleMarkAsDelivered() {
     markAsDelivered(order.id);
   }
 
@@ -167,7 +167,7 @@ const OrderDetails = ({
         <p className="text-sm text-muted-foreground">Distance: {route ? `${(route.distance / 1000).toFixed(2)} km` : 'Calculating...'}</p>
         <p className="text-sm text-muted-foreground">Duration: {route ? `${(route.duration / 60).toFixed(2)} minutes` : 'Calculating...'}</p>
       </div>
-    <Button size="sm" className='text-white rounded-full font-semibold bg-blue-600' onClick={() => handleMarkAsDelivered(order.id)}>
+    <Button size="sm" className='text-white rounded-full font-semibold bg-primary' onClick={handleMarkAsDelivered}>
         <CheckCircle className="h-5 w-5 text-white" />
         Mark as Delivered
     </Button>

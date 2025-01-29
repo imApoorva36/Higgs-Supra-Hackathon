@@ -52,6 +52,7 @@ export default function CustomerDashboard() {
   const { account, setAccount } = useAppContext();
 
   useEffect(() => {
+    sessionStorage.getItem("starkeyAccount") && setAccount(sessionStorage.getItem("starkeyAccount"))
     const fetchPackages = async () => {
       try {
         setIsLoading(true)

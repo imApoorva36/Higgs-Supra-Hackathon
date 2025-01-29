@@ -31,6 +31,7 @@ import dynamic from "next/dynamic";
 import { useSession } from 'next-auth/react'
 import { useAppContext } from '@/components/AppContext'
 import Order from '../../models/order';
+import Image from 'next/image'
 
 const WebcamCaptureModal = dynamic(
   () => import("../../components/WebcamCapture"),
@@ -56,6 +57,7 @@ export default function DeliveryAgentDashboard() {
   const { apiKey, setApiKey, buildType, setBuildType, account, setAccount, role, setRole, contract, setContract } = useAppContext();
 
   useEffect(() => {
+    sessionStorage.getItem("starkeyAccount") && setAccount(sessionStorage.getItem("starkeyAccount"));
     navigator.geolocation.getCurrentPosition((position) => {
       setDeliveryAgentLocation({
         latitude: position.coords.latitude,
@@ -173,15 +175,34 @@ export default function DeliveryAgentDashboard() {
   
 
   return (
+    <>
+          <nav className="bg-primary p-4">
+            <div className="container mx-auto flex justify-between items-center">
+              <div className="flex items-center space-x-4">
+                <Image src="/box3-diag.png" alt="Box3 Logo" width={40} height={40} />
+                <div className="text-white text-xl font-bold">Delivery Agent Dashboard</div>
+              </div>
+              {account && (
+                <div className="p-2 border border-secondary rounded-full shadow-md">
+                  <div className="flex items-center space-x-2 px-2">
+                  <Image src="/starkey.png" alt="StarKey Logo" width={32} height={32} className="hidden sm:block" />
+                  <span className="text-sm text-white font-semibold truncate max-w-[120px] sm:max-w-[200px]">
+                    {`${account.slice(0, 6)}...${account.slice(-4)}`}
+                  </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </nav>
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Delivery Agent Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-8">My Deliveries</h1>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Total Packages" value={stats.total.toString()} icon={<Package className="h-8 w-8 text-primary" />} />
-        <StatCard title="Delivered" value={stats.delivered.toString()} icon={<Truck className="h-8 w-8 text-primary" />} />
-        <StatCard title="Pending" value={stats.pending.toString()} icon={<AlertCircle className="h-8 w-8 text-primary" />} />
-        <StatCard title="Total Earnings" value={`${stats.totalValue.toString().slice(0,8)} ETH`} icon={<BarChart3 className="h-8 w-8 text-primary" />} />
+        <StatCard title="Total Packages" value={stats.total.toString()} icon={<Package className="h-6 w-6" />} />
+        <StatCard title="Delivered" value={stats.delivered.toString()} icon={<Truck className="h-6 w-6" />} />
+        <StatCard title="Pending" value={stats.pending.toString()} icon={<AlertCircle className="h-6 w-6" />} />
+        <StatCard title="Total Earnings" value={`${stats.totalValue.toString().slice(0,8)} ETH`} icon={<BarChart3 className="h-6 w-6" />} />
       </div>
 
       {/* Orders and Packages Tabs */}
@@ -242,6 +263,7 @@ export default function DeliveryAgentDashboard() {
             </CardContent>
           </Card>
     </div >
+    </>
   )
 }
 
