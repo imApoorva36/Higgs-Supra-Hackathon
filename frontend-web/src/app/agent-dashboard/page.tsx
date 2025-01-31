@@ -117,7 +117,7 @@ export default function DeliveryAgentDashboard() {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     
     const distance = R * c; // in metres
-    return (distance/1000).toFixed(2) + " km/s";
+    return (distance/1000).toFixed(2) + " km";
   }
 
   // const handleMarkAsDelivered = async (packageId: number) => {

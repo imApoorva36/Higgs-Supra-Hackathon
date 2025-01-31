@@ -272,7 +272,9 @@ function CreateOrderDialog() {
     setOrderData({ contents: "", value: 0, description: "" })
     const accounts = await connectWallet();
     console.log("Wallet address", accounts[0]) 
-    await createOrder('metadata', 'cid', 'name', 'description', 100, 'senderAddress', 'receiverAddress', 37.7749, -122.4194, 'customerRfid', 'deliveryRfid', accounts[0]);
+    await createOrder('metadata', 'cid', 'name', 'description', 100, 
+      '0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255', '0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255', 
+      37, 155, 'customerRfid', 'deliveryRfid', "0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255");
   }
 
   return (

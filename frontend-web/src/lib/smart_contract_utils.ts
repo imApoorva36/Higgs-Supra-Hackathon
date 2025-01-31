@@ -1,4 +1,4 @@
-import { HexString, SupraAccount, SupraClient } from 'supra-l1-sdk'
+import { BCS, HexString, SupraAccount, SupraClient, TxnBuilderTypes } from 'supra-l1-sdk'
 
 const CONTRACT_ADDRESS = '0xa8ec96f327c18b20a4a20ac0f25725527e4686385710aa8a74df7cd75fc3e1e6';
 const MODULE_NAME = 'smartboxmod';
@@ -96,21 +96,32 @@ async function invokeSmartContractTransaction(request: InvokeSmartContractArgs, 
         CONTRACT_ADDRESS,                     
         MODULE_NAME,                        
         request.function,                     
-        request.type_arguments,               
-        request.argument            
-      );
-
+        [], // type arguments - empty array if none needed
+        [  // function arguments
+            BCS.bcsSerializeStr("metadata"),
+            BCS.bcsSerializeStr("cid"),
+            BCS.bcsSerializeStr("name"),
+            BCS.bcsSerializeStr("description"),
+            BCS.bcsSerializeUint64(100),
+            TxnBuilderTypes.AccountAddress.fromHex("0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255").toBytes(),
+            TxnBuilderTypes.AccountAddress.fromHex("0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255").toBytes(),
+            BCS.bcsSerializeUint64(37),
+            BCS.bcsSerializeUint64(155),
+            BCS.bcsSerializeStr("customerRfid"),
+            BCS.bcsSerializeStr("deliveryRfid")
+        ]
+    );
+    
     console.log("step 3");
     
-      const txResult = await client.sendTxUsingSerializedRawTransaction(
+    const txResult = await client.sendTxUsingSerializedRawTransaction(
         supraAccount,
         serializedRawTx,
         {
             enableWaitForTransaction: true,
             enableTransactionSimulation: false,
         }
-      );
-
+    );
     console.log("Transaction result:");
     console.log(txResult);
     
