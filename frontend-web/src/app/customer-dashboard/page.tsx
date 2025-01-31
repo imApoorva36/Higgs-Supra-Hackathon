@@ -22,6 +22,8 @@ import { DashboardStats } from "../../components/DashboardStats"
 import axios from "axios"
 import Image from "next/image"
 import { useAppContext } from "@/components/AppContext"
+import { connectWallet, createOrder } from "@/lib/smart_contract_utils"
+import { create } from "domain"
 
 export interface PackageInterface {
   id: number
@@ -268,6 +270,11 @@ function CreateOrderDialog() {
     }
     console.log("Order submitted:", orderData)
     setOrderData({ contents: "", value: 0, description: "" })
+    const accounts = await connectWallet();
+    console.log("Wallet address", accounts[0]) 
+    await createOrder('metadata', 'cid', 'name', 'description', 100, 
+      '0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255', '0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255', 
+      37, 155, 'customerRfid', 'deliveryRfid', "0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255");
   }
 
   return (

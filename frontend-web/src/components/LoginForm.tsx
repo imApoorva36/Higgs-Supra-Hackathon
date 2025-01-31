@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { ChevronLeft, ChevronRight, Truck, User } from "lucide-react"
 import Image from "next/image";
 import { useAppContext } from "./AppContext";
+import { connectWallet, disconnectWallet } from "@/lib/smart_contract_utils";
+import { disconnect } from "process";
 
 interface StarkeyWindow extends Window {
     starkey?: {
@@ -26,7 +28,6 @@ export function LoginForm({
     const [currentStep, setCurrentStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [rfid, setRfid] = useState('Fetching Your String...')
-    const [provider, setProvider] = useState<any>()
     const router = useRouter()
     const {role, setRole} = useAppContext();
     const {account, setAccount} = useAppContext();
@@ -40,30 +41,14 @@ export function LoginForm({
 
 
     const connectStarKeyWallet = async () => {
-        if (!('starkey' in window)) {
-            window.alert("StarKey Wallet not installed!")
-            window.open('https://starkey.app/', '_blank')
-            return
-        }
-        const provider = window.starkey?.supra
-        if (provider) {
-            setProvider(provider)
-            try {
-                const accounts = await provider.connect();
-                setAccount(accounts[0])
-                sessionStorage.setItem('starkeyAccount', accounts[0]);
-            } catch (error) {
-                window.alert(`Error connecting wallet: ${error}`)
-            }
-        }
+        console.log('Connecting wallet...')
+        const accounts = await connectWallet();
+        console.log('Accounts:', accounts)
+        setAccount(accounts[0])
     }
 
     const disconnectStarKeyWallet = async () => {
-        if (provider) {
-            await provider.disconnect();
-            setAccount("")
-            sessionStorage.removeItem('starkeyAccount');
-        }
+       await disconnectWallet()
     }
 
     const scanRFID = async () => {
