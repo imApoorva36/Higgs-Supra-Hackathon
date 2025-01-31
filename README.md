@@ -47,7 +47,7 @@ SupraTag takes a **multi-layered security approach** by combining:
 2. **IoT integration** via Raspberry Pi to process package data.
 3. **Blockchain (Supra, Move-based smart contract)** for immutable storage and smart contract execution.
 4. **Web-based platform (Next.js)** for user interaction and verification.
-5. **External Verification (Galadriel)** to cross-check package authenticity.
+5. **External Verification (Gemini)** to cross-check package authenticity.
 
 With this setup, SupraTag guarantees a **seamless and fraud-resistant** package authentication system.
 
@@ -149,7 +149,7 @@ In today’s global supply chain, **counterfeit goods, package tampering, and la
 3. **Immutable Blockchain Storage** – All package interactions are recorded on **Supra’s decentralized ledger**, preventing data tampering.
 4. **Smart Contract Automation** – Move-based smart contracts **enforce trustless validation**, ensuring that only legitimate transactions occur.
 5. **Web-Based Verification** – Customers and logistics partners can scan RFID tags to instantly verify a package’s authenticity via a user-friendly Next.js platform.
-6. **External Verification with Galadriel** – Further enhances security by cross-checking package records with external data sources.
+6. **External Verification with Gemini** – Further enhances security by cross-checking package records with external data sources.
 
 ### **Why SupraTag is a Game-Changer**
 
