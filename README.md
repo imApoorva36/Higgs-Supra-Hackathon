@@ -17,7 +17,7 @@ We are **Team Higgs**, a group of students from **NITK, Surathkal**. Our team me
 
 ## **Video Explainer**
 
-(To be provided: Includes a walkthrough of the team, project document, and live demo showcasing package authentication via RFID, Move smart contract execution, and web-based verification.)
+[Watch the Video Explainer](#)
 
 ---
 
@@ -78,21 +78,19 @@ With this setup, SupraTag guarantees a **seamless and fraud-resistant** package 
 
 ## **Implementation**
 
-### **1. Prerequisites**
+### **1. Prerequisites and Clone the Repository**
 
 - **Hardware:** Raspberry Pi with an RFID receiver.
 - **Software:**
   - Python, Node.js, npm
   - Supra account setup
 
-### **2. Clone the Repository**
-
 ```bash
 git clone https://github.com/imApoorva36/Higgs-Supra-Hackathon.git
 cd Higgs-Supra-Hackathon
 ```
 
-### **3. Backend Setup (Django)**
+### **2. Backend Setup (Django)**
 
 ```bash
 cd backend
@@ -100,7 +98,7 @@ pip install -r requirements.txt
 python manage.py runserver
 ```
 
-### **4. Web App Setup (Next.js)**
+### **3. Web App Setup (Next.js)**
 
 ```bash
 cd web
@@ -128,11 +126,11 @@ Despite these challenges, overcoming them resulted in a **robust, scalable, and 
 
 ## **Problem Statement & Solution – SupraTag**
 
-### **🚨 The Problem: Lack of Secure and Trustworthy Package Authentication**
+### **The Problem: Lack of Secure and Trustworthy Package Authentication**
 
 In today’s global supply chain, **counterfeit goods, package tampering, and lack of verifiable authenticity** pose significant risks to businesses and consumers. Traditional logistics systems rely on **centralized databases** and **manual verification**, making them vulnerable to fraud, unauthorized modifications, and inefficiencies.
 
-🔴 **Key Challenges:**
+**Key Challenges:**
 
 - **Counterfeit Products** – Fake goods infiltrating supply chains, leading to financial and reputational damage.
 - **Package Tampering** – No secure mechanism to detect unauthorized access or modifications.
@@ -140,11 +138,11 @@ In today’s global supply chain, **counterfeit goods, package tampering, and la
 - **Centralized Trust Issues** – Traditional logistics rely on intermediaries, making data prone to manipulation.
 - **Delayed Verification** – Current tracking systems lack real-time authentication, causing inefficiencies.
 
-### **✅ Our Solution: SupraTag – Secure, Decentralized Package Authentication**
+### **Our Solution: SupraTag – Secure, Decentralized Package Authentication**
 
 **SupraTag** leverages **RFID technology, IoT integration, and blockchain-powered smart contracts (Move on Supra Blockchain)** to create a **trustless, tamper-proof, and fully traceable package verification system**.
 
-**🔹 How SupraTag Solves the Problem:**
+**How SupraTag Solves the Problem:**
 
 1. **RFID-Based Authentication** – Each package is assigned a unique RFID tag linked to a blockchain record, ensuring authenticity.
 2. **IoT-Driven Verification** – A Raspberry Pi-based RFID scanner records package data and updates the blockchain in real time.
@@ -153,31 +151,21 @@ In today’s global supply chain, **counterfeit goods, package tampering, and la
 5. **Web-Based Verification** – Customers and logistics partners can scan RFID tags to instantly verify a package’s authenticity via a user-friendly Next.js platform.
 6. **External Verification with Galadriel** – Further enhances security by cross-checking package records with external data sources.
 
-### **🚀 Why SupraTag is a Game-Changer**
+### **Why SupraTag is a Game-Changer**
 
-🔹 **Eliminates Counterfeits** – Guarantees package legitimacy with blockchain-backed proof.
-🔹 **Tamper-Proof Security** – Unauthorized access is instantly detected and recorded.
-🔹 **Trustless & Decentralized** – No need for intermediaries; verification is transparent and immutable.
-🔹 **Real-Time Verification** – Packages can be authenticated within seconds using RFID and web-based access.
-🔹 **Seamless Integration** – Works with existing supply chain infrastructure, enhancing security without adding friction.
+- **Eliminates Counterfeits** – Guarantees package legitimacy with blockchain-backed proof.
+- **Tamper-Proof Security** – Unauthorized access is instantly detected and recorded.
+- **Trustless & Decentralized** – No need for intermediaries; verification is transparent and immutable.
+- **Real-Time Verification** – Packages can be authenticated within seconds using RFID and web-based access.
+- **Seamless Integration** – Works with existing supply chain infrastructure, enhancing security without adding friction.
 
-By integrating **Supra blockchain, IoT, and RFID technology**, **SupraTag** provides a next-generation solution for **secure, transparent, and fraud-resistant package authentication**, making supply chains more reliable and efficient. 🚀💡
+By integrating **Supra blockchain, IoT, and RFID technology**, **SupraTag** provides a next-generation solution for **secure, transparent, and fraud-resistant package authentication**, making supply chains more reliable and efficient.
 
 ---
 
-## **Demo Instructions**
+## **Migration from Box3 to SupraTag**
 
-### **How to Run the Demo**
-
-1. Clone the repository and follow the setup instructions above.
-2. Use **Starkey Wallet** for blockchain interactions.
-3. Run the backend and web frontend as described.
-4. Verify packages using RFID scans through the web interface.
-5. Smart contract verification occurs on Supra blockchain.
-
-### **Supra Interaction**
-
-SupraTag actively interacts with Supra's services by deploying and executing **Move-based smart contracts** for secure and decentralized package authentication.
+Our previous project, **Box3**, was built on Ethereum and included additional technical components that were not essential. With **SupraTag**, we have migrated to the **Supra blockchain** and rewritten our smart contracts in the **Move language**, which offers several advantages such as improved security and efficiency. We also streamlined the project by removing unnecessary components like a separate app and focusing on a web-based interface. Additionally, we integrated the **Starkey Wallet** for better user experience. This migration has resulted in a more robust, scalable, and user-friendly package authentication system.
 
 ---
 
@@ -208,12 +196,3 @@ Contributions are welcome! Follow these steps to contribute:
 ## **License**
 
 This project is licensed under the [MIT License](LICENSE).
-
----
-
-## **Final Notes**
-
-- **Public repository available for all aspects of the project.**
-- **Smart contract is fully written in Move for efficiency and security.**
-- **All interactions with Supra APIs and network are meaningful and fully documented.**
-- **Detailed documentation ensures ease of review and reproducibility.**
