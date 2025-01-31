@@ -53,7 +53,7 @@ export function LoginForm({
 
     const scanRFID = async () => {
         try {
-            const response = await fetch(`http://192.168.167.131:8000/api/create_tag/`, {
+            const response = await fetch(`http://192.168.82.132:8000/api/create_tag/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -174,8 +174,8 @@ export function LoginForm({
                         <div className="flex flex-col gap-6 m-10">
                             <div className="mb-8">
                                 <div className="flex items-center justify-center mb-8">
-                                    <Image src="/box3-diag.png" alt="BOX3 Logo" width={60} height={60} />
-                                    <h1 className="text-2xl md:text-3xl ml-4">Box3</h1>
+                                    <Image src="/box3-diag.png" alt="SupraTag Logo" width={60} height={60} />
+                                    <h1 className="text-2xl md:text-3xl ml-4">SupraTag</h1>
                                 </div>
                                 <div className="flex justify-between mb-2">
                                     {steps.map((step, index) => (

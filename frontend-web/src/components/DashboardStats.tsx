@@ -1,12 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Package, Truck, CheckCircle, DollarSign } from "lucide-react"
+import Order from "@/models/order"
+import { Package, Truck, CheckCircle, DollarSign, EthernetPortIcon } from "lucide-react"
+import Image from "next/image";
 
-export function DashboardStats({ packages }) {
-  const totalPackages = packages.length
-  const inTransit = packages.filter((pkg) => !pkg.delivered).length
-  const delivered = packages.filter((pkg) => pkg.delivered && !pkg.fundsReleased).length
-  const completed = packages.filter((pkg) => pkg.fundsReleased).length
-  const totalValue = packages.reduce((sum, pkg) => sum + pkg.funds, 0)
+export function DashboardStats({orders}: {orders: Order[]}) {
+  const totalPackages = orders.length
+  const inTransit = orders.filter((order) => !order.orderDelivered).length
+  const delivered = orders.filter((order) => order.orderDelivered && !order.fundReleased).length
+  const completed = orders.filter((order) => order.fundReleased).length
+  const totalValue = orders.reduce((sum, order) => sum + order.deliveryFees, 0)
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -40,7 +42,18 @@ export function DashboardStats({ packages }) {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+          <div style={{ position: 'relative', width: 20, height: 20 }}>
+            <Image src="/eth.png" alt="Eth" layout="fill" objectFit="contain" style={{ filter: 'invert(1)' }} />
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#3F3B3B',
+              mixBlendMode: 'color'
+            }} />
+      </div>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{totalValue.toFixed(3)} ETH</div>

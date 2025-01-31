@@ -5,6 +5,7 @@ import { Badge } from './ui/badge';
 import {CheckCircle, Link, Map} from 'lucide-react';
 import Order from '@/models/order';
 import { Button } from './ui/button';
+import { markAsDelivered } from '@/lib/smart_contract_utils';
 
 interface OrderDetails {
   accessToken: string;
@@ -126,8 +127,8 @@ const OrderDetails = ({
     window.open(link, '_blank');
   }
 
-  function handleMarkAsDelivered() {
-    markAsDelivered(order.id);
+  async function handleMarkAsDelivered() {
+    await markAsDelivered(order.id);
   }
 
   return (
@@ -153,7 +154,8 @@ const OrderDetails = ({
           </Badge>
       </div>
     </div>
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 place-content-between my-4 mx-4">
+      <div>
       <div className="bg-white p-4 rounded">
         <h3 className="text-lg font-semibold">Order Details</h3>
         <p className="text-sm text-muted-foreground">Customer Name: {order.customerName}</p>
@@ -166,6 +168,7 @@ const OrderDetails = ({
         <h3 className="text-lg font-semibold">Route Details</h3>
         <p className="text-sm text-muted-foreground">Distance: {route ? `${(route.distance / 1000).toFixed(2)} km` : 'Calculating...'}</p>
         <p className="text-sm text-muted-foreground">Duration: {route ? `${(route.duration / 60).toFixed(2)} minutes` : 'Calculating...'}</p>
+      </div>
       </div>
     <Button size="sm" className='text-white rounded-full font-semibold bg-primary' onClick={handleMarkAsDelivered}>
         <CheckCircle className="h-5 w-5 text-white" />

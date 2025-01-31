@@ -22,33 +22,13 @@ import { DashboardStats } from "../../components/DashboardStats"
 import axios from "axios"
 import Image from "next/image"
 import { useAppContext } from "@/components/AppContext"
-import { connectWallet, createOrder } from "@/lib/smart_contract_utils"
+import { connectWallet, createOrder, getAllPackages } from "@/lib/smart_contract_utils"
 import { create } from "domain"
+import Order from "@/models/order"
 
-export interface PackageInterface {
-  id: number
-  cid: string
-  metadata: string
-  delivered: boolean
-  fundsReleased: boolean
-  funds: number
-}
-
-
-const mockPackages = [
-  { id: 1, cid: "Qm...1", metadata: "Books", delivered: false, fundsReleased: false, funds: 0.01 },
-  { id: 2, cid: "Qm...2", metadata: "Electronics", delivered: true, fundsReleased: false, funds: 0.05 },
-  { id: 3, cid: "Qm...3", metadata: "Clothing", delivered: true, fundsReleased: true, funds: 0.02 },
-  { id: 4, cid: "Qm...1", metadata: "Books", delivered: false, fundsReleased: false, funds: 0.01 },
-  { id: 5, cid: "Qm...2", metadata: "Electronics", delivered: true, fundsReleased: false, funds: 0.05 },
-  { id: 6, cid: "Qm...3", metadata: "Clothing", delivered: true, fundsReleased: true, funds: 0.02 },
-  { id: 7, cid: "Qm...1", metadata: "Books", delivered: false, fundsReleased: false, funds: 0.01 },
-  { id: 8, cid: "Qm...2", metadata: "Electronics", delivered: true, fundsReleased: false, funds: 0.05 },
-  { id: 9, cid: "Qm...3", metadata: "Clothing", delivered: true, fundsReleased: true, funds: 0.02 },
-]
 
 export default function CustomerDashboard() {
-  const [packages, setPackages] = useState<PackageInterface[]>([])
+  const [packages, setPackages] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const { account, setAccount } = useAppContext();
@@ -58,10 +38,11 @@ export default function CustomerDashboard() {
     const fetchPackages = async () => {
       try {
         setIsLoading(true)
-        setTimeout(() => setPackages(mockPackages), 1000)
+        console.log("Fetching packages...")
+        const orders = await getAllPackages();
+        setPackages(orders)
       } catch (error) {
         console.error("Error fetching packages:", error)
-        setPackages(mockPackages)
       } finally {
         setIsLoading(false)
       }
@@ -82,6 +63,7 @@ export default function CustomerDashboard() {
   }
 
   const handleOpenBox = (packageId: number) => {
+    console.log(packageId)
     setPackages((prevPackages) =>
       prevPackages.map((pkg) => (pkg.id === packageId ? { ...pkg, fundsReleased: true } : pkg)),
     )
@@ -90,7 +72,7 @@ export default function CustomerDashboard() {
 
   const actuateServo = async () => {
     try {
-      const response = await axios.get(`http://192.168.167.131:8000/api/servo/`)
+      const response = await axios.get(`http://192.168.82.132:8000/api/servo/`)
       console.log(response.data)
     } catch (error) {
       console.error("Error activating servo:", error)
@@ -99,7 +81,7 @@ export default function CustomerDashboard() {
 
   const readRFID = async (packageId: number) => {
     try {
-      const response = await axios.get(`http://192.168.167.131:8000/api/get_tag/`)
+      const response = await axios.get(`http://192.168.82.132:8000/api/get_tag/`)
       const { tag_id: rfidFromAPI } = response.data
       console.log(`Fetched RFID: ${rfidFromAPI}`)
       handleOpenBox(packageId)
@@ -110,8 +92,8 @@ export default function CustomerDashboard() {
 
   const filteredPackages = packages.filter(
     (pkg) =>
-      pkg.metadata.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      pkg.cid.toLowerCase().includes(searchTerm.toLowerCase()),
+      pkg.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pkg.description.toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   return (
@@ -119,7 +101,7 @@ export default function CustomerDashboard() {
       <nav className="bg-primary p-4">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <Image src="/box3-diag.png" alt="Box3 Logo" width={40} height={40} />
+            <Image src="/box3-diag.png" alt="SupraTag Logo" width={40} height={40} />
             <div className="text-white text-xl font-bold">Customer Dashboard</div>
           </div>
           {account && (
@@ -152,7 +134,7 @@ export default function CustomerDashboard() {
           </div>
         </div>
 
-        <DashboardStats packages={packages} />
+        <DashboardStats orders={packages} />
 
         {isLoading ? (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -186,34 +168,34 @@ export default function CustomerDashboard() {
                 <CardHeader className="space-y-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-xl font-bold text-primary">
-                      Package #{pkg.id}
+                      Package - {pkg.content}
                     </CardTitle>
                     <Badge variant="secondary"
                       className="flex items-center px-3 py-1"
                     >
-                      {getStatusIcon(pkg.delivered, pkg.fundsReleased)}
-                      <span className="ml-2 font-medium">{getStatusText(pkg.delivered, pkg.fundsReleased)}</span>
+                      {getStatusIcon(pkg.orderDelivered, pkg.fundReleased)}
+                      <span className="ml-2 font-medium">{getStatusText(pkg.orderDelivered, pkg.fundReleased)}</span>
                     </Badge>
                   </div>
                   <CardDescription className="flex items-center space-x-2 text-sm">
                     <Package className="h-4 w-4" />
-                    <span className="font-mono">CID: {pkg.cid}</span>
+                    <span className="font-mono">CID: {pkg.id}</span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-12">
                     <div>
-                      <p className="text-sm text-muted-foreground mb-1">Contents</p>
-                      <p className="font-medium">{pkg.metadata}</p>
+                      <p className="text-sm text-muted-foreground mb-1">Address</p>
+                      <p className="font-medium">{pkg.deliveryAddress}</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Value</p>
-                      <p className="font-medium">{pkg.funds} ETH</p>
+                      <p className="font-medium">{pkg.deliveryFees} ETH</p>
                     </div>
                   </div>
                 </CardContent>
                 <CardFooter>
-                  {pkg.delivered && !pkg.fundsReleased ? (
+                  {pkg.orderDelivered && !pkg.fundReleased ? (
                     <Button
                       onClick={() => readRFID(pkg.id)}
                       className="w-full bg-primary hover:bg-primary/90"
@@ -221,7 +203,7 @@ export default function CustomerDashboard() {
                       <Package className="mr-2 h-4 w-4" />
                       Open Box
                     </Button>
-                  ) : pkg.fundsReleased ? (
+                  ) : pkg.fundReleased ? (
                     <Button
                       variant="ghost"
                       className="w-full hover:bg-secondary/80"
@@ -255,26 +237,27 @@ function CreateOrderDialog() {
     contents: "",
     value: 0,
     description: "",
+    address: ""
   })
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e:any) => {
     const { name, value } = e.target
     setOrderData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e:any) => {
     e.preventDefault()
     if (!orderData.contents || !orderData.value || !orderData.description) {
       alert("Please fill in all required fields")
       return
     }
     console.log("Order submitted:", orderData)
-    setOrderData({ contents: "", value: 0, description: "" })
+    setOrderData({ contents: "", value: 0, description: "" , address: ""})
     const accounts = await connectWallet();
     console.log("Wallet address", accounts[0]) 
     await createOrder('metadata', 'cid', 'name', 'description', 100, 
       '0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255', '0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255', 
-      37, 155, 'customerRfid', 'deliveryRfid', "0xedfa1c3b4fecc75f8b8400922c31a5dc691d8f152fbae130cb95ae1606267255");
+      37, 155, 'customerRfid', 'deliveryRfid');
   }
 
   return (
@@ -302,17 +285,28 @@ function CreateOrderDialog() {
               required
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="value">Value (ETH)</Label>
+          {/* <div className="space-y-2">
+            <Label htmlFor="value">Delivery Fee (ETH)</Label>
             <Input
               id="value"
               name="value"
               type="number"
               value={orderData.value}
               onChange={handleInputChange}
-              placeholder="Enter package value"
+              placeholder="Enter delivery value"
               step="0.0001"
               min="0"
+              required
+            />
+          </div> */}
+          <div className="space-y-2">
+            <Label htmlFor="address">Destination Delivery Address</Label>
+            <Input
+              id="address"
+              name="address"
+              value={orderData.address}
+              onChange={handleInputChange}
+              placeholder="Enter address"
               required
             />
           </div>

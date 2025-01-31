@@ -14,7 +14,7 @@ interface WebcamCaptureModalProps {
 
 const PINATA_API_KEY = process.env.NEXT_PUBLIC_PINATA_API_KEY
 const PINATA_API_SECRET = process.env.NEXT_PUBLIC_PINATA_API_SECRET
-const API_ENDPOINT = "http://192.168.167.131:8000/api/verify_package/"
+const API_ENDPOINT = "http://192.168.82.132:8000//api/verify_package/"
 
 const WebcamCaptureModal: React.FC<WebcamCaptureModalProps> = ({ isOpen, onClose }) => {
   const webcamRef = useRef<Webcam>(null)

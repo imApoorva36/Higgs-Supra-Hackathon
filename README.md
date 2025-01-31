@@ -17,7 +17,7 @@ We are **Team Higgs**, a group of students from **NITK, Surathkal**. Our team me
 
 ## **Video Explainer**
 
-[Watch the Video Explainer](#)
+[Watch the Video Explainer](https://youtu.be/rXlJQRaUWzE)
 
 ---
 

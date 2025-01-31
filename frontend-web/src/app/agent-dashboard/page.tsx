@@ -32,18 +32,13 @@ import { useSession } from 'next-auth/react'
 import { useAppContext } from '@/components/AppContext'
 import Order from '../../models/order';
 import Image from 'next/image'
+import { getAllPackages, getUndeliveredPackages } from '@/lib/smart_contract_utils'
+import { useRouter } from 'next/navigation'
 
 const WebcamCaptureModal = dynamic(
   () => import("../../components/WebcamCapture"),
   { ssr: false }
 );
-// Mock data to simulate fetching from the blockchain
-const mockOrders = [
-  new Order('Alice', 1, '0x1234...', '0x5678...', 'rfid1', 'rfid2', false, 0.5, 'Books', 'A collection of books', '123 Main St', 13.001240, 74.796450),
-  new Order('Bob', 2, '0x5678...', '0x1234...', 'rfid2', 'rfid1', true, 0.7, 'Electronics', 'A new laptop', '456 Elm St', 37.7749, -122.4194),
-  new Order('Charlie', 3, '0x9012...', '0x3456...', 'rfid3', 'rfid4', false, 0.6, 'Clothing', 'A new shirt', '789 Oak St', 37.7749, -122.4194),
-];
-
 
 export default function DeliveryAgentDashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -53,6 +48,7 @@ export default function DeliveryAgentDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState({ total: 0, delivered: 0, pending: 0, totalValue: 0 })
   const [deliveryAgentLocation, setDeliveryAgentLocation] = useState({ latitude: 0, longitude: 0 })
+  const router = useRouter();
 
   const { apiKey, setApiKey, buildType, setBuildType, account, setAccount, role, setRole, contract, setContract } = useAppContext();
 
@@ -67,16 +63,11 @@ export default function DeliveryAgentDashboard() {
     // Simulating API call to fetch orders and packages from the blockchain
     const fetchData = async () => {
 
-      if(contract){
-        const fetchOrders = await contract.getAllOrders();
+      const orders = await getUndeliveredPackages();
 
-        console.log(fetchOrders.funds);
-      }
-
-
-      setOrders(mockOrders)
+      setOrders(orders)
       setIsLoading(false)
-      calculateStats(mockOrders)
+      calculateStats(orders)
     }
 
     fetchData()
@@ -86,7 +77,7 @@ export default function DeliveryAgentDashboard() {
     const total = orders.length
     const delivered = orders.filter(order => order.orderDelivered).length
     const pending = total - delivered
-    const totalValue = orders.reduce((sum, order) => sum + order.deliveryFees, 0)
+    const totalValue = orders.reduce((sum, order) => order.fundReleased ? sum + order.deliveryFees : sum, 0)
     setStats({ total, delivered, pending, totalValue })
   }
 
@@ -132,45 +123,49 @@ export default function DeliveryAgentDashboard() {
   // }
 
   // Function called whenever the agent decides to deliver an order
-  const handlePickUpOrder = async (formData) => {
-    try {
-      console.log('Creating new package:', formData);
+  // const handlePickUpOrder = async (formData) => {
+  //   try {
+  //     console.log('Creating new package:', formData);
   
-      // Format funds to appropriate format (assuming ETH)
-      // const funds = ethers.utils.parseEther(formData.funds.toString());
+  //     // Format funds to appropriate format (assuming ETH)
+  //     // const funds = ethers.utils.parseEther(formData.funds.toString());
   
-      // Call the smart contract function
-      const tx = await contract.createPackage(
-        formData.metadata,
-        formData.cid,
-        formData.customer,
-        formData.funds
-      );
-      console.log('Transaction sent:', tx);
+  //     // Call the smart contract function
+  //     const tx = await contract.createPackage(
+  //       formData.metadata,
+  //       formData.cid,
+  //       formData.customer,
+  //       formData.funds
+  //     );
+  //     console.log('Transaction sent:', tx);
   
-      // Wait for the transaction to be mined
-      const receipt = await tx.wait();
-      console.log('Transaction confirmed:', receipt);
+  //     // Wait for the transaction to be mined
+  //     const receipt = await tx.wait();
+  //     console.log('Transaction confirmed:', receipt);
   
-      // Create the new package object
-      const newPackage = {
-        id: packages.length + 1,
-        cid: formData.cid,
-        metadata: formData.metadata,
-        customer: formData.customer,
-        delivered: false,
-        fundsReleased: false,
-        funds: formData.funds // Keep as string for display purposes
-      };
+  //     // Create the new package object
+  //     const newPackage = {
+  //       id: packages.length + 1,
+  //       cid: formData.cid,
+  //       metadata: formData.metadata,
+  //       customer: formData.customer,
+  //       delivered: false,
+  //       fundsReleased: false,
+  //       funds: formData.funds // Keep as string for display purposes
+  //     };
   
-      // Update state after successful transaction
-      const updatedPackages = [...packages, newPackage];
-      calculateStats(updatedPackages);
+  //     // Update state after successful transaction
+  //     const updatedPackages = [...packages, newPackage];
+  //     calculateStats(updatedPackages);
   
-    } catch (error) {
-      console.error('Error creating package:', error);
-      // Optionally display error feedback to the user
-    }
+  //   } catch (error) {
+  //     console.error('Error creating package:', error);
+  //     // Optionally display error feedback to the user
+  //   }
+  // };
+
+  const handleButtonClick = (order: Order) => {
+    router.push(`/order-delivery-page/${order.id}`)
   };
   
 
@@ -239,6 +234,7 @@ export default function DeliveryAgentDashboard() {
                       <TableHead>Earnings</TableHead>
                       <TableHead>Distance (approx.)</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Funds Transferred</TableHead>
                       <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -250,10 +246,15 @@ export default function DeliveryAgentDashboard() {
                         <TableCell>{order.deliveryFees} ETH</TableCell>
                         <TableCell>{computeDistanceFromUser(order)}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className={order.orderDelivered ? "bg-green-400" : "bg-gray-100"}>{order.orderDelivered ? "Delivered": "Pending"}</Badge>
+                          <Badge variant="secondary" className={order.orderDelivered ? "bg-green-400 hover:bg-green-400" : "bg-gray-100"}>{order.orderDelivered ? "Delivered": "Pending"}</Badge>
                         </TableCell>
                         <TableCell>
-                          <CreateDialogBox title={"Deliver order"} content={"Are you sure you want to deliver this order?"} onSubmit={handlePickUpOrder} buttonTitle={"Continue"} />
+                          <Badge variant="secondary" className={order.fundReleased ? "bg-green-400 hover:bg-green-400" : "bg-gray-100"}>{order.fundReleased ? "Sucessful": "Pending"}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <CreateDialogBox title={"Deliver order"} content={"Are you sure you want to deliver this order?"} onSubmit={() => {
+                              handleButtonClick(order)
+                          }} buttonTitle={"Continue"} />
                         </TableCell>
                       </TableRow>
                     ))}

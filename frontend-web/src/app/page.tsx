@@ -35,7 +35,7 @@ export default function Home() {
         <nav className="container mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Image src="/box3-diag.png" alt="BOX3 Logo" width={50} height={50} />
-            <span className="text-2xl font-bold">BOX3</span>
+            <span className="text-2xl font-bold">SupraTag</span>
           </div>
           <div className="hidden md:flex space-x-6">
             <a href="#features" className="hover:text-primary transition-colors">Features</a>
@@ -83,7 +83,7 @@ export default function Home() {
               Deliveries
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              BOX3 revolutionizes package delivery with blockchain technology, smart contracts, and AI-powered
+            SupraTag revolutionizes package delivery with blockchain technology, smart contracts, and AI-powered
               verification.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
@@ -110,7 +110,7 @@ export default function Home() {
             <div className="absolute inset-0 bg-gradient-to-br from-primary to-red-700 rounded-3xl transform rotate-3"></div>
             <Image
               src="/box3.webp"
-              alt="BOX3 Smart Delivery"
+              alt="SupraTag Smart Delivery"
               width={600}
               height={600}
               className="rounded-3xl shadow-2xl relative z-10 transform -rotate-3 transition-all duration-300 hover:rotate-0"
@@ -176,7 +176,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            How BOX3 Works
+            How SupraTag Works
           </motion.h2>
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
@@ -230,7 +230,7 @@ export default function Home() {
             >
               <Image
                 src="/arch-diag.jpeg"
-                alt="BOX3 SmartBox Illustration"
+                alt="SupraTag SmartBox Illustration"
                 width={800}
                 height={600}
                 objectFit="cover"
@@ -263,7 +263,7 @@ export default function Home() {
             Ready to Revolutionize Your Deliveries?
           </h2>
           <p className="text-xl mb-12 max-w-2xl mx-auto text-gray-400">
-            Join the BOX3 network and experience the future of secure, decentralized package delivery.
+            Join the SupraTag network and experience the future of secure, decentralized package delivery.
           </p>
           <Link href="/login">
             <Button className="bg-red-600 text-white hover:bg-red-700 text-lg px-8 py-6 rounded-full transition-all duration-300 ease-in-out transform hover:scale-105">
@@ -283,7 +283,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            &copy; 2025 BOX3. All rights reserved.
+            &copy; 2025 SupraTag. All rights reserved.
           </motion.p>
           <motion.div
             className="flex space-x-6 mt-6 md:mt-0"

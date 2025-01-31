@@ -17,7 +17,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "BOX3",
+  title: "SupraTag",
   description: "",
 };
 
